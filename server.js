@@ -271,15 +271,21 @@ app.get('/api/session/:code/export.csv', (req, res) => {
     }
     return s;
   };
-  const rows = [['userId','name','questionId','questionText','x','y','timestamp']];
+  // X-as = Risico (Hoog links=0, Laag rechts=100) → risico_pct = 100 - x
+  // Y-as = Pedagogische meerwaarde (Laag=0, Hoog=100) → meerwaarde_pct = y
+  const rows = [['userId','name','questionId','questionText','risico_0laag_100hoog','meerwaarde_0laag_100hoog','x_plot','y_plot','timestamp']];
   for (const q of session.questions.values()) {
     for (const [uid, pos] of q.positions.entries()) {
       const p = session.participants.get(uid);
+      const risico = 100 - pos.x;
+      const meerwaarde = pos.y;
       rows.push([
         uid,
         p ? p.name : '',
         q.id,
         q.text,
+        risico.toFixed(2),
+        meerwaarde.toFixed(2),
         pos.x.toFixed(2),
         pos.y.toFixed(2),
         new Date(pos.timestamp).toISOString()
