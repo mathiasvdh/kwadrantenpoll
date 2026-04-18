@@ -1,0 +1,19 @@
+{
+  "name": "kwadrantenpoll",
+  "version": "1.0.0",
+  "description": "Real-time 2D quadrant poll webapp voor workshops (Vevox-achtig)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.8.1"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}

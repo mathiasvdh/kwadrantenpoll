@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#2563eb" />
+<title>Kwadrantenpoll — Facilitator</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <button class="hamburger" id="openSidebar" aria-label="Menu">☰</button>
+      <div class="session-box">
+        <div class="code-wrap">
+          <div class="code-label">Sessiecode</div>
+          <div id="sessionCode">----</div>
+          <div class="participant-url" id="participantUrl"></div>
+        </div>
+        <img id="qrImg" alt="QR" title="Klik voor volledig scherm" />
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="stat"><strong id="placedCount">0</strong> / <strong id="totalCount">0</strong> geplaatst</div>
+
+      <div class="admin-controls">
+        <label><input type="checkbox" id="blindToggle" /> Blind mode</label>
+        <label><input type="checkbox" id="hoverLabelsToggle" /> Labels enkel bij hover</label>
+        <button class="ghost" id="qrFullscreen" title="QR groot tonen">QR groot</button>
+        <button class="ghost" id="exportPngBtn" title="Exporteer PNG">PNG</button>
+        <button class="ghost" id="exportCsvBtn" title="Exporteer CSV">CSV</button>
+      </div>
+    </header>
+
+    <div class="body">
+      <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+      <aside class="sidebar" id="sidebar">
+        <button class="sidebar-close" id="closeSidebar">✕</button>
+        <h3>Gelanceerd</h3>
+        <div id="launchedList"></div>
+        <h3>Komende</h3>
+        <div id="pendingList"></div>
+      </aside>
+
+      <main class="main">
+        <div class="question-bar" id="questionBar">
+          <div class="label" id="qBarLabel">Geen actieve vraag</div>
+          <div class="text" id="qBarText">Lanceer een vraag uit het zijpaneel om te beginnen.</div>
+        </div>
+
+        <div class="review-banner" id="reviewBanner" style="display:none">
+          <span>Je bekijkt een afgesloten vraag — read-only voor deelnemers.</span>
+          <button class="primary" id="backToActive">Terug naar huidige vraag</button>
+        </div>
+
+        <div class="chart-area">
+          <div class="chart-wrapper">
+            <svg id="chart"></svg>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- QR fullscreen overlay -->
+  <div class="qr-overlay hide" id="qrOverlay">
+    <div class="code" id="qrOverlayCode">----</div>
+    <img id="qrOverlayImg" alt="QR" />
+    <div class="hint">Klik ergens om te sluiten — scan of ga naar <span id="qrOverlayUrl"></span></div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/chart.js"></script>
+  <script src="/js/admin.js"></script>
+</body>
+</html>

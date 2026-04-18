@@ -1,0 +1,6 @@
+node_modules/
+sessions-snapshot.json
+sessions-snapshot.json.tmp
+.DS_Store
+*.log
+.env

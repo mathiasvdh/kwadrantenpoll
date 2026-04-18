@@ -1,0 +1,7 @@
+node_modules
+npm-debug.log
+sessions-snapshot.json
+.git
+.gitignore
+.DS_Store
+*.md

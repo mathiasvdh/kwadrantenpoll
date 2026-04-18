@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#2563eb" />
+<title>Kwadrantenpoll — Deelnemen</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <!-- Fase 1: Sessiecode invoeren -->
+  <div class="join-screen" id="codeScreen">
+    <div class="join-card">
+      <h1>Deelnemen aan de poll</h1>
+      <p>Voer de 4-cijferige sessiecode in die de facilitator toont.</p>
+      <input type="text" id="codeInput" class="codefield" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="0000" />
+      <div class="row">
+        <button class="primary" id="codeNext">Doorgaan</button>
+      </div>
+      <div class="join-error" id="codeError"></div>
+    </div>
+  </div>
+
+  <!-- Fase 2: Naam invoeren -->
+  <div class="join-screen" id="nameScreen" style="display:none">
+    <div class="join-card">
+      <h1>Jouw naam</h1>
+      <p>Je naam verschijnt bij jouw stip op het scherm. Maximaal 30 tekens.</p>
+      <input type="text" id="nameInput" maxlength="30" autocomplete="off" placeholder="Je naam" />
+      <div class="row">
+        <button class="ghost" id="nameBack">Terug</button>
+        <button class="primary" id="nameSubmit">Deelnemen</button>
+      </div>
+      <div class="join-error" id="nameError"></div>
+    </div>
+  </div>
+
+  <!-- Hoofdscherm -->
+  <div class="app" id="mainApp" style="display:none">
+    <header class="topbar">
+      <button class="hamburger" id="openSidebar" aria-label="Menu">☰</button>
+      <div class="title">Kwadrantenpoll</div>
+      <div class="session-code" id="topCode">----</div>
+      <div class="spacer"></div>
+      <div class="stat" id="participantCount"></div>
+      <button class="ghost" id="hoverToggle" title="Toon namen enkel bij hover" style="display:none">👁</button>
+    </header>
+
+    <div class="body">
+      <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+      <aside class="sidebar" id="sidebar">
+        <button class="sidebar-close" id="closeSidebar">✕</button>
+        <h3>Vragen</h3>
+        <div id="questionList"></div>
+      </aside>
+
+      <main class="main">
+        <div class="question-bar" id="questionBar">
+          <div class="label" id="qBarLabel">Wachten…</div>
+          <div class="text" id="qBarText">Wachten op de facilitator…</div>
+        </div>
+
+        <div class="review-banner" id="reviewBanner" style="display:none">
+          <span>Je bekijkt een afgesloten vraag — read-only.</span>
+          <button class="primary" id="backToActive">Terug naar huidige vraag</button>
+        </div>
+
+        <div class="chart-area" id="chartArea">
+          <div class="chart-wrapper">
+            <svg id="chart"></svg>
+            <div class="waiting-screen" id="waitingScreen">Wachten op de facilitator…</div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div class="new-question-toast hide" id="newQuestionToast">
+      <span>Nieuwe vraag gelanceerd</span>
+      <strong>— klik om te gaan →</strong>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/chart.js"></script>
+  <script src="/js/participant.js"></script>
+</body>
+</html>
