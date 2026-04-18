@@ -2,6 +2,14 @@
 
 Real-time 2D kwadranten-poll webapp voor workshops. Deelnemers plaatsen zichzelf per vraag op een grafiek met **Pedagogische meerwaarde** (X) en **Risico** (Y). Iedereen ziet live alle stippen met namen.
 
+## Online zetten — 1 klik
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/mathiasvdh/kwadrantenpoll)
+
+Klik de knop, log in op Render (gratis), Render leest de `render.yaml` in en deployt automatisch. Na ±2 minuten krijg je een publieke URL zoals `https://kwadrantenpoll.onrender.com`. Admin zit op `/admin`, deelnemers op `/`.
+
+> Render zet de service in slaap na 15 min inactiviteit op het gratis plan (eerste request na slaap duurt ±30 s). Voor altijd-aan heb je het Starter-plan ($7/mnd) nodig.
+
 ## Lokaal starten
 
 ```bash
