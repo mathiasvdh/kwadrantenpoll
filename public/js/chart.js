@@ -5,13 +5,13 @@
   const PLOT = { x: 60, y: 60, w: 500, h: 500 };
 
   const DEFAULT_CONFIG = {
-    axisX: { title: 'Risico',                  low: 'Hoog', high: 'Laag' },
-    axisY: { title: 'Pedagogische meerwaarde', low: 'Laag', high: 'Hoog' },
+    axisX: { title: 'Risico', low: 'Laag', high: 'Hoog' },
+    axisY: { title: 'Impact', low: 'Laag', high: 'Hoog' },
     quadrants: {
-      tl: { text: 'Hoog risico / Hoge meerwaarde', color: '#ffe8cc' },
-      tr: { text: 'Laag risico / Hoge meerwaarde', color: '#dcf1dc' },
-      bl: { text: 'Hoog risico / Lage meerwaarde', color: '#fde0e0' },
-      br: { text: 'Laag risico / Lage meerwaarde', color: '#ececec' }
+      tl: { text: 'Laag risico / Hoge impact', color: '#dcf1dc' },
+      tr: { text: 'Hoog risico / Hoge impact', color: '#ffe2c0' },
+      bl: { text: 'Laag risico / Lage impact', color: '#f0dfdb' },
+      br: { text: 'Hoog risico / Lage impact', color: '#f2a29a' }
     }
   };
 

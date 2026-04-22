@@ -37,13 +37,13 @@ const DEFAULT_QUESTIONS = [
 // ============================================================================
 function buildDefaultConfig() {
   return {
-    axisX: { title: 'Risico',                     low: 'Hoog', high: 'Laag' }, // low = label aan x=0 (links), high = label aan x=100 (rechts)
-    axisY: { title: 'Pedagogische meerwaarde',    low: 'Laag', high: 'Hoog' }, // low = label aan y=0 (onder), high = label aan y=100 (boven)
+    axisX: { title: 'Risico', low: 'Laag', high: 'Hoog' }, // low = label aan x=0 (links), high = label aan x=100 (rechts)
+    axisY: { title: 'Impact', low: 'Laag', high: 'Hoog' }, // low = label aan y=0 (onder), high = label aan y=100 (boven)
     quadrants: {
-      tl: { text: 'Hoog risico / Hoge meerwaarde', color: '#ffe8cc' },
-      tr: { text: 'Laag risico / Hoge meerwaarde', color: '#dcf1dc' },
-      bl: { text: 'Hoog risico / Lage meerwaarde', color: '#fde0e0' },
-      br: { text: 'Laag risico / Lage meerwaarde', color: '#ececec' }
+      tl: { text: 'Laag risico / Hoge impact', color: '#dcf1dc' }, // lichtgroen
+      tr: { text: 'Hoog risico / Hoge impact', color: '#ffe2c0' }, // lichtoranje
+      bl: { text: 'Laag risico / Lage impact', color: '#f0dfdb' }, // zacht roze
+      br: { text: 'Hoog risico / Lage impact', color: '#f2a29a' }  // rood
     }
   };
 }
