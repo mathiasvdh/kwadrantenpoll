@@ -43,19 +43,17 @@ Deelnemers kunnen afgesloten vragen bekijken in **review-modus** (read-only, met
 
 Toggle in de admin-topbar. Namen worden verborgen op álle client-schermen (de eigen stip blijft gelabeld). Handig om bias te vermijden voordat iedereen geplaatst heeft.
 
-## Vragen aanpassen
+## Vragen + assen aanpassen (via de UI)
 
-Open [`server.js`](server.js) en pas de array `questions` bovenaan aan. Elke vraag heeft een uniek numeriek `id` en een `text`:
+Klik bovenaan op **⚙ Instellingen** (admin):
 
-```js
-const questions = [
-  { id: 1, text: "Jouw eerste vraag…" },
-  { id: 2, text: "Jouw tweede vraag…" },
-  // …
-];
-```
+- **Tab "Assen & kleuren"**: pas titel + links/rechts/boven/onder-labels aan voor X en Y. Kies kleur en tekst per kwadrant (linksboven, rechtsboven, linksonder, rechtsonder). Klik **Toepassen** — alle deelnemers zien de nieuwe labels/kleuren onmiddellijk.
+- **Tab "Vragen"**: voeg stellingen toe, bewerk inline, herorder met pijltjes, verwijder. Werkt ook tijdens een lopende sessie (let wel op bij actieve/afgesloten vragen — waarschuwing geeft aan wat verloren gaat).
+- **Tab "Presets"**: bewaar je huidige setup (assen + vragen) in je browser onder een naam. Na een Render-timeout of server-restart: open opnieuw `/admin`, klik **Presets → Laad** en je hele workshop staat weer klaar in een nieuwe sessie. Presets kunnen ook als `.json`-bestand geëxporteerd/geïmporteerd worden om te delen tussen toestellen of collega's.
 
-Herstart de server na wijzigingen. Tip: laat de `id`-waarden stabiel als je een oude sessie-snapshot wil kunnen herladen.
+### Eigen standaardvragen in code (optioneel)
+
+Wil je andere defaults bij een fresh start? Open [`server.js`](server.js) en pas de array `DEFAULT_QUESTIONS` bovenaan aan. Die wordt gebruikt wanneer een admin een nieuwe sessie maakt zonder preset te laden.
 
 ## State en persistentie
 

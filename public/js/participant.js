@@ -44,7 +44,8 @@
     blindMode: false,
     socket: null,
     chart: null,
-    hoverLabelsOnly: false
+    hoverLabelsOnly: false,
+    config: null
   };
 
   // ---------- utils ----------
@@ -135,8 +136,36 @@
       state.activeQuestionId = data.activeQuestionId;
       state.blindMode = !!data.blindMode;
       state.participants = new Map(data.participants.map(p => [p.id, p]));
+      state.config = data.config || null;
       updateParticipantCount();
       state.chart?.setBlindMode(state.blindMode);
+      if (state.config) state.chart?.setConfig(state.config);
+    });
+
+    sock.on('config-changed', ({ config }) => {
+      state.config = config;
+      state.chart?.setConfig(config);
+    });
+
+    sock.on('questions-updated', ({ questions: qs }) => {
+      // vervang de lokale lijst met gelanceerde vragen (behoud posities uit lokale cache waar mogelijk)
+      const newMap = new Map();
+      for (const q of qs) {
+        const prev = state.questions.get(q.id);
+        newMap.set(q.id, {
+          id: q.id, text: q.text, status: q.status,
+          launchedAt: q.launchedAt,
+          responseCount: q.responseCount,
+          positions: new Map((q.positions || []).map(p => [p.userId, p]))
+        });
+      }
+      state.questions = newMap;
+      // als de huidige viewedQuestionId niet meer bestaat, reset
+      if (state.viewedQuestionId != null && !state.questions.has(state.viewedQuestionId)) {
+        state.viewedQuestionId = state.activeQuestionId ?? null;
+      }
+      renderSidebar();
+      renderMain();
     });
 
     sock.on('question-history', (data) => {
@@ -258,6 +287,7 @@
     state.chart = new QuadrantChart(el.chartSvg, {
       interactive: false,
       ownUserId: state.userId,
+      config: state.config || null,
       onSubmit: (x, y, final) => {
         if (state.viewedQuestionId !== state.activeQuestionId) return;
         if (state.activeQuestionId == null) return;

@@ -27,6 +27,7 @@
       <div class="admin-controls">
         <label><input type="checkbox" id="blindToggle" /> Blind mode</label>
         <label><input type="checkbox" id="hoverLabelsToggle" /> Labels enkel bij hover</label>
+        <button class="ghost" id="settingsBtn" title="Instellingen (assen, kleuren, vragen, presets)">⚙ Instellingen</button>
         <button class="ghost" id="qrFullscreen" title="QR groot tonen">QR groot</button>
         <button class="ghost" id="exportPngBtn" title="Exporteer PNG">PNG</button>
         <button class="ghost" id="exportCsvBtn" title="Exporteer CSV">CSV</button>
@@ -68,6 +69,115 @@
     <div class="code" id="qrOverlayCode">----</div>
     <img id="qrOverlayImg" alt="QR" />
     <div class="hint">Klik ergens om te sluiten — scan of ga naar <span id="qrOverlayUrl"></span></div>
+  </div>
+
+  <!-- Settings modal -->
+  <div class="modal-overlay hide" id="settingsModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <header class="modal-header">
+        <h2 id="settingsTitle">Instellingen</h2>
+        <button class="modal-close" id="settingsClose" aria-label="Sluiten">✕</button>
+      </header>
+      <div class="tabs">
+        <button class="tab active" data-tab="axes">Assen &amp; kleuren</button>
+        <button class="tab" data-tab="questions">Vragen</button>
+        <button class="tab" data-tab="presets">Presets</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- TAB: assen + kwadranten -->
+        <section class="tab-pane" data-pane="axes">
+          <div class="form-row">
+            <fieldset>
+              <legend>X-as (horizontaal)</legend>
+              <label><span>Titel</span><input type="text" id="cfgXTitle" maxlength="40" /></label>
+              <label><span>Links (x=0)</span><input type="text" id="cfgXLow" maxlength="30" /></label>
+              <label><span>Rechts (x=100)</span><input type="text" id="cfgXHigh" maxlength="30" /></label>
+            </fieldset>
+            <fieldset>
+              <legend>Y-as (verticaal)</legend>
+              <label><span>Titel</span><input type="text" id="cfgYTitle" maxlength="40" /></label>
+              <label><span>Onder (y=0)</span><input type="text" id="cfgYLow" maxlength="30" /></label>
+              <label><span>Boven (y=100)</span><input type="text" id="cfgYHigh" maxlength="30" /></label>
+            </fieldset>
+          </div>
+
+          <fieldset>
+            <legend>Kwadranten — tekst &amp; kleur</legend>
+            <div class="quadrant-grid">
+              <div class="q-edit">
+                <div class="qpos">Linksboven</div>
+                <input type="text" id="cfgTlText" maxlength="80" placeholder="Tekst" />
+                <input type="color" id="cfgTlColor" title="Kleur" />
+              </div>
+              <div class="q-edit">
+                <div class="qpos">Rechtsboven</div>
+                <input type="text" id="cfgTrText" maxlength="80" placeholder="Tekst" />
+                <input type="color" id="cfgTrColor" title="Kleur" />
+              </div>
+              <div class="q-edit">
+                <div class="qpos">Linksonder</div>
+                <input type="text" id="cfgBlText" maxlength="80" placeholder="Tekst" />
+                <input type="color" id="cfgBlColor" title="Kleur" />
+              </div>
+              <div class="q-edit">
+                <div class="qpos">Rechtsonder</div>
+                <input type="text" id="cfgBrText" maxlength="80" placeholder="Tekst" />
+                <input type="color" id="cfgBrColor" title="Kleur" />
+              </div>
+            </div>
+            <button class="ghost" id="cfgAutoLabel" type="button">↺ Auto-invullen vanuit de assen</button>
+          </fieldset>
+
+          <div class="modal-actions">
+            <button class="primary" id="cfgApply" type="button">Toepassen</button>
+            <button class="ghost" id="cfgRevert" type="button">Herstel naar server</button>
+            <button class="ghost" id="cfgDefaults" type="button">Standaardinstellingen</button>
+          </div>
+        </section>
+
+        <!-- TAB: vragen -->
+        <section class="tab-pane hide" data-pane="questions">
+          <p class="hint-text">Sleep-bestelling vervangen door pijltjes. Bewerken past de tekst live aan voor alle deelnemers.</p>
+          <div id="qEditorList"></div>
+          <fieldset>
+            <legend>Vraag toevoegen</legend>
+            <textarea id="qAddText" maxlength="500" placeholder="Typ een nieuwe stelling…" rows="3"></textarea>
+            <button class="primary" id="qAddBtn" type="button">+ Toevoegen</button>
+          </fieldset>
+        </section>
+
+        <!-- TAB: presets -->
+        <section class="tab-pane hide" data-pane="presets">
+          <p class="hint-text">
+            Presets worden opgeslagen in je eigen browser (<code>localStorage</code>).
+            Na een Render-timeout open je gewoon opnieuw <code>/admin</code> en laad je je preset —
+            een nieuwe code wordt aangemaakt met jouw vragen + assen klaar.
+          </p>
+          <fieldset>
+            <legend>Jouw opgeslagen presets</legend>
+            <div id="presetList" class="preset-list">
+              <div class="hint-text" style="padding:8px">Nog geen presets opgeslagen.</div>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Huidige opstelling bewaren</legend>
+            <label><span>Naam</span><input type="text" id="presetSaveName" maxlength="60" placeholder="bv. AI in onderwijs" /></label>
+            <button class="primary" id="presetSaveBtn" type="button">💾 Opslaan als preset</button>
+          </fieldset>
+          <fieldset>
+            <legend>Bestand import / export</legend>
+            <button class="ghost" id="presetExportBtn" type="button">⬇ Export huidige als .json-bestand</button>
+            <label class="file-upload-label">
+              ⬆ Import .json-bestand
+              <input type="file" id="presetImportFile" accept=".json,application/json" style="display:none" />
+            </label>
+            <div class="hint-text">Handig om presets te delen tussen toestellen / collega's.</div>
+          </fieldset>
+        </section>
+
+      </div>
+    </div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>

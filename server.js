@@ -13,24 +13,78 @@ const SESSION_TTL_MS = 6 * 60 * 60 * 1000;
 const MAX_PARTICIPANTS = 200;
 
 // ============================================================================
-// VRAGEN — pas hier je lijst aan
+// STANDAARD VRAGEN — komen in een nieuwe sessie. Admin kan ze live aanpassen.
 // ============================================================================
-const questions = [
-  { id: 1,  text: "Een chatbot op basis van geselecteerde bronnen die vragen van studenten tijdens de les behandelt, zodat enkel de moeilijkste vragen nog aan de docent gesteld worden." },
-  { id: 2,  text: "Een Socratische bot die aan het begin van de les vragen stelt aan studenten over de vorige les." },
-  { id: 3,  text: "Een bot die zich gedraagt als een student en die studenten begrippen uit de cursus moeten aanleren." },
-  { id: 4,  text: "Een chatbot die oefenexamenvragen aanbiedt met inhoudelijke feedback op basis van het cursusmateriaal." },
-  { id: 5,  text: "Een chatbot gevuld met het cursusmateriaal plus alle academische artikels uit de syllabus, waarin studenten vrij elk concept kunnen bevragen tijdens en na de les." },
-  { id: 6,  text: "Een rollenspel-bot die de rol speelt van een patiënt, cliënt of getuige waarmee studenten gesprekstechnieken oefenen." },
-  { id: 7,  text: "Een debat-tegenstander die een specifieke filosofische of ethische positie inneemt, waartegen studenten moeten argumenteren." },
-  { id: 8,  text: "Een chatbot voor eigen gebruik door de docent, doorzoekbaar in diens vakliteratuur en collegenotities om passages en citaten op te sporen bij het opstellen van examenvragen." },
-  { id: 9,  text: "Een bot die een eerste feedbackronde genereert op thesisdrafts, die studenten zelf inzetten vóór indiening bij de promotor." },
-  { id: 10, text: "Een AI-helpdesk die studenten antwoord geeft op vragen over stagereglement, ECTS-afspraken en examenregeling." },
-  { id: 11, text: "Een rubric-nakijker die open examenvragen automatisch scoort volgens een vastgelegde rubric, waarmee de docent zijn eigen score vergelijkt." },
-  { id: 12, text: "Een via NotebookLM gegenereerde podcast op basis van cursusmateriaal en slides, als preteaching beschikbaar voor studenten." },
-  { id: 13, text: "Een bot die per hoofdstuk van de cursus samenvattingen en studiekaarten genereert en aan alle studenten ter beschikking stelt." },
-  { id: 14, text: "Een vertaalbot die alle colleges live ondertitelt voor anderstalige en slechthorende studenten en de transcriptie nadien beschikbaar maakt." }
+const DEFAULT_QUESTIONS = [
+  "Een chatbot op basis van geselecteerde bronnen die vragen van studenten tijdens de les behandelt, zodat enkel de moeilijkste vragen nog aan de docent gesteld worden.",
+  "Een Socratische bot die aan het begin van de les vragen stelt aan studenten over de vorige les.",
+  "Een bot die zich gedraagt als een student en die studenten begrippen uit de cursus moeten aanleren.",
+  "Een chatbot die oefenexamenvragen aanbiedt met inhoudelijke feedback op basis van het cursusmateriaal.",
+  "Een chatbot gevuld met het cursusmateriaal plus alle academische artikels uit de syllabus, waarin studenten vrij elk concept kunnen bevragen tijdens en na de les.",
+  "Een rollenspel-bot die de rol speelt van een patiënt, cliënt of getuige waarmee studenten gesprekstechnieken oefenen.",
+  "Een debat-tegenstander die een specifieke filosofische of ethische positie inneemt, waartegen studenten moeten argumenteren.",
+  "Een chatbot voor eigen gebruik door de docent, doorzoekbaar in diens vakliteratuur en collegenotities om passages en citaten op te sporen bij het opstellen van examenvragen.",
+  "Een bot die een eerste feedbackronde genereert op thesisdrafts, die studenten zelf inzetten vóór indiening bij de promotor.",
+  "Een AI-helpdesk die studenten antwoord geeft op vragen over stagereglement, ECTS-afspraken en examenregeling.",
+  "Een rubric-nakijker die open examenvragen automatisch scoort volgens een vastgelegde rubric, waarmee de docent zijn eigen score vergelijkt.",
+  "Een via NotebookLM gegenereerde podcast op basis van cursusmateriaal en slides, als preteaching beschikbaar voor studenten.",
+  "Een bot die per hoofdstuk van de cursus samenvattingen en studiekaarten genereert en aan alle studenten ter beschikking stelt.",
+  "Een vertaalbot die alle colleges live ondertitelt voor anderstalige en slechthorende studenten en de transcriptie nadien beschikbaar maakt."
 ];
+
+// ============================================================================
+// STANDAARD CONFIG — assen + kwadrantkleuren
+// ============================================================================
+function buildDefaultConfig() {
+  return {
+    axisX: { title: 'Risico',                     low: 'Hoog', high: 'Laag' }, // low = label aan x=0 (links), high = label aan x=100 (rechts)
+    axisY: { title: 'Pedagogische meerwaarde',    low: 'Laag', high: 'Hoog' }, // low = label aan y=0 (onder), high = label aan y=100 (boven)
+    quadrants: {
+      tl: { text: 'Hoog risico / Hoge meerwaarde', color: '#ffe8cc' },
+      tr: { text: 'Laag risico / Hoge meerwaarde', color: '#dcf1dc' },
+      bl: { text: 'Hoog risico / Lage meerwaarde', color: '#fde0e0' },
+      br: { text: 'Laag risico / Lage meerwaarde', color: '#ececec' }
+    }
+  };
+}
+
+function sanitizeConfig(input) {
+  const d = buildDefaultConfig();
+  if (!input || typeof input !== 'object') return d;
+  const str = (v, fallback, max = 60) => {
+    if (typeof v !== 'string') return fallback;
+    return v.replace(/[\u0000-\u001F<>]/g, '').trim().slice(0, max) || fallback;
+  };
+  const color = (v, fallback) => {
+    if (typeof v !== 'string') return fallback;
+    const t = v.trim();
+    if (/^#[0-9a-f]{3,8}$/i.test(t)) return t;
+    if (/^(rgb|hsl)a?\(\s*[0-9.,\s%-]+\s*\)$/i.test(t)) return t;
+    return fallback;
+  };
+  const q = (side) => ({
+    text: str(input.quadrants?.[side]?.text, d.quadrants[side].text, 80),
+    color: color(input.quadrants?.[side]?.color, d.quadrants[side].color)
+  });
+  return {
+    axisX: {
+      title: str(input.axisX?.title, d.axisX.title, 40),
+      low:   str(input.axisX?.low,   d.axisX.low,   30),
+      high:  str(input.axisX?.high,  d.axisX.high,  30)
+    },
+    axisY: {
+      title: str(input.axisY?.title, d.axisY.title, 40),
+      low:   str(input.axisY?.low,   d.axisY.low,   30),
+      high:  str(input.axisY?.high,  d.axisY.high,  30)
+    },
+    quadrants: { tl: q('tl'), tr: q('tr'), bl: q('bl'), br: q('br') }
+  };
+}
+
+function sanitizeQuestionText(v) {
+  if (typeof v !== 'string') return '';
+  return v.replace(/[\u0000-\u001F]/g, ' ').trim().slice(0, 500);
+}
 
 // ============================================================================
 // STATE
@@ -63,19 +117,34 @@ function hslForUserId(userId) {
   return `hsl(${hue}, ${sat}%, ${light}%)`;
 }
 
-function makeQuestionsState() {
-  return new Map(questions.map(q => [q.id, {
-    id: q.id,
-    text: q.text,
-    status: 'pending',
-    launchedAt: null,
-    positions: new Map()
-  }]));
+function makeDefaultQuestionsMap() {
+  const map = new Map();
+  DEFAULT_QUESTIONS.forEach((text, i) => {
+    const id = i + 1;
+    map.set(id, { id, text, status: 'pending', launchedAt: null, positions: new Map() });
+  });
+  return map;
 }
 
-function createSession() {
+function createSession(initialConfig, initialQuestions) {
   const code = generateSessionCode();
   const now = Date.now();
+  let questionsMap;
+  let nextQuestionId;
+  if (Array.isArray(initialQuestions) && initialQuestions.length > 0) {
+    questionsMap = new Map();
+    initialQuestions.forEach((text, i) => {
+      const t = sanitizeQuestionText(text);
+      if (!t) return;
+      const id = i + 1;
+      questionsMap.set(id, { id, text: t, status: 'pending', launchedAt: null, positions: new Map() });
+    });
+    if (questionsMap.size === 0) questionsMap = makeDefaultQuestionsMap();
+    nextQuestionId = questionsMap.size + 1;
+  } else {
+    questionsMap = makeDefaultQuestionsMap();
+    nextQuestionId = DEFAULT_QUESTIONS.length + 1;
+  }
   const session = {
     code,
     createdAt: now,
@@ -83,8 +152,10 @@ function createSession() {
     adminToken: crypto.randomUUID(),
     activeQuestionId: null,
     blindMode: false,
+    config: sanitizeConfig(initialConfig),
+    nextQuestionId,
     participants: new Map(),
-    questions: makeQuestionsState()
+    questions: questionsMap
   };
   sessions.set(code, session);
   return session;
@@ -111,6 +182,8 @@ function serializeSessions() {
     adminToken: s.adminToken,
     activeQuestionId: s.activeQuestionId,
     blindMode: s.blindMode,
+    config: s.config,
+    nextQuestionId: s.nextQuestionId,
     participants: Array.from(s.participants.entries()).map(([id, p]) => ({
       id, name: p.name, color: p.color
     })),
@@ -132,16 +205,22 @@ function restoreSessions() {
         p.id, { name: p.name, color: p.color, connected: false }
       ]));
       const questionsMap = new Map();
-      for (const cfg of questions) {
-        questionsMap.set(cfg.id, { id: cfg.id, text: cfg.text, status: 'pending', launchedAt: null, positions: new Map() });
+      // respecteer volgorde van snapshot
+      for (const q of (s.questions || [])) {
+        const txt = sanitizeQuestionText(q.text);
+        if (!txt) continue;
+        questionsMap.set(q.id, {
+          id: q.id,
+          text: txt,
+          status: ['pending','active','closed'].includes(q.status) ? q.status : 'pending',
+          launchedAt: q.launchedAt ?? null,
+          positions: new Map((q.positions || []).map(p => [p.userId, { x: p.x, y: p.y, timestamp: p.timestamp }]))
+        });
       }
-      for (const q of s.questions) {
-        if (!questionsMap.has(q.id)) continue;
-        const restored = questionsMap.get(q.id);
-        restored.status = q.status;
-        restored.launchedAt = q.launchedAt;
-        restored.positions = new Map(q.positions.map(p => [p.userId, { x: p.x, y: p.y, timestamp: p.timestamp }]));
+      if (questionsMap.size === 0) {
+        makeDefaultQuestionsMap().forEach((v, k) => questionsMap.set(k, v));
       }
+      const maxId = Math.max(0, ...questionsMap.keys());
       sessions.set(s.code, {
         code: s.code,
         createdAt: s.createdAt,
@@ -149,6 +228,8 @@ function restoreSessions() {
         adminToken: s.adminToken,
         activeQuestionId: s.activeQuestionId,
         blindMode: !!s.blindMode,
+        config: sanitizeConfig(s.config),
+        nextQuestionId: s.nextQuestionId && s.nextQuestionId > maxId ? s.nextQuestionId : maxId + 1,
         participants,
         questions: questionsMap
       });
@@ -194,11 +275,11 @@ function serializeQuestionForClient(q, includePending) {
 }
 
 function buildSessionState(session) {
-  // voor deelnemers: enkel gelanceerde vragen (active + closed)
   return {
     code: session.code,
     activeQuestionId: session.activeQuestionId,
     blindMode: session.blindMode,
+    config: session.config,
     participants: Array.from(session.participants.entries()).map(([id, p]) => ({
       id, name: p.name, color: p.color, connected: p.connected
     })),
@@ -214,12 +295,27 @@ function buildAdminState(session) {
     adminToken: session.adminToken,
     activeQuestionId: session.activeQuestionId,
     blindMode: session.blindMode,
+    config: session.config,
     participants: Array.from(session.participants.entries()).map(([id, p]) => ({
       id, name: p.name, color: p.color, connected: p.connected
     })),
     questions: Array.from(session.questions.values())
       .map(q => serializeQuestionForClient(q, true))
   };
+}
+
+function broadcastQuestionsUpdated(session) {
+  const pub = Array.from(session.questions.values())
+    .map(q => serializeQuestionForClient(q, false))
+    .filter(Boolean);
+  const adm = Array.from(session.questions.values())
+    .map(q => serializeQuestionForClient(q, true));
+  io.to(`session:${session.code}`).emit('questions-updated', { questions: pub });
+  io.to(`admin:${session.code}`).emit('admin-questions-updated', { questions: adm });
+}
+
+function broadcastConfigChanged(session) {
+  io.to(`session:${session.code}`).emit('config-changed', { config: session.config });
 }
 
 // ============================================================================
@@ -271,21 +367,19 @@ app.get('/api/session/:code/export.csv', (req, res) => {
     }
     return s;
   };
-  // X-as = Risico (Hoog links=0, Laag rechts=100) → risico_pct = 100 - x
-  // Y-as = Pedagogische meerwaarde (Laag=0, Hoog=100) → meerwaarde_pct = y
-  const rows = [['userId','name','questionId','questionText','risico_0laag_100hoog','meerwaarde_0laag_100hoog','x_plot','y_plot','timestamp']];
+  // Dynamische kolomnamen op basis van sessie-config
+  const cfg = session.config || buildDefaultConfig();
+  const xHeader = `x: ${cfg.axisX.title} (0=links/${cfg.axisX.low}, 100=rechts/${cfg.axisX.high})`;
+  const yHeader = `y: ${cfg.axisY.title} (0=onder/${cfg.axisY.low}, 100=boven/${cfg.axisY.high})`;
+  const rows = [['userId','name','questionId','questionText', xHeader, yHeader, 'timestamp']];
   for (const q of session.questions.values()) {
     for (const [uid, pos] of q.positions.entries()) {
       const p = session.participants.get(uid);
-      const risico = 100 - pos.x;
-      const meerwaarde = pos.y;
       rows.push([
         uid,
         p ? p.name : '',
         q.id,
         q.text,
-        risico.toFixed(2),
-        meerwaarde.toFixed(2),
         pos.x.toFixed(2),
         pos.y.toFixed(2),
         new Date(pos.timestamp).toISOString()
@@ -318,10 +412,11 @@ io.on('connection', (socket) => {
     return getSession();
   }
 
-  // ----- Admin: nieuwe sessie aanmaken -----
-  socket.on('admin-create-session', (_arg, cb) => {
+  // ----- Admin: nieuwe sessie aanmaken (eventueel met preset config/questions) -----
+  socket.on('admin-create-session', (arg, cb) => {
     try {
-      const session = createSession();
+      const opts = arg && typeof arg === 'object' ? arg : {};
+      const session = createSession(opts.config, opts.questions);
       currentCode = session.code;
       isAdmin = true;
       socket.join(`session:${session.code}`);
@@ -391,6 +486,7 @@ io.on('connection', (socket) => {
       code: session.code,
       activeQuestionId: session.activeQuestionId,
       blindMode: session.blindMode,
+      config: session.config,
       participants: Array.from(session.participants.entries()).map(([id, p]) => ({
         id, name: p.name, color: p.color, connected: p.connected
       }))
@@ -515,6 +611,110 @@ io.on('connection', (socket) => {
     touchSession(session);
     markDirty();
     io.to(`session:${session.code}`).emit('blind-mode-changed', { value: session.blindMode });
+  });
+
+  // ----- Admin: config updaten (assen, kwadrantlabels + kleuren) -----
+  socket.on('admin-update-config', ({ config } = {}, cb) => {
+    const session = requireAdmin(); if (!session) return cb?.({ ok: false });
+    session.config = sanitizeConfig(config);
+    touchSession(session);
+    markDirty();
+    broadcastConfigChanged(session);
+    cb?.({ ok: true, config: session.config });
+  });
+
+  // ----- Admin: vraag toevoegen -----
+  socket.on('admin-add-question', ({ text } = {}, cb) => {
+    const session = requireAdmin(); if (!session) return cb?.({ ok: false });
+    const clean = sanitizeQuestionText(text);
+    if (!clean) return cb?.({ ok: false, error: 'EMPTY' });
+    const id = session.nextQuestionId++;
+    const q = { id, text: clean, status: 'pending', launchedAt: null, positions: new Map() };
+    session.questions.set(id, q);
+    touchSession(session); markDirty();
+    broadcastQuestionsUpdated(session);
+    cb?.({ ok: true, id });
+  });
+
+  // ----- Admin: vraagtekst wijzigen -----
+  socket.on('admin-update-question', ({ id, text } = {}, cb) => {
+    const session = requireAdmin(); if (!session) return cb?.({ ok: false });
+    const q = session.questions.get(Number(id));
+    if (!q) return cb?.({ ok: false, error: 'NOT_FOUND' });
+    const clean = sanitizeQuestionText(text);
+    if (!clean) return cb?.({ ok: false, error: 'EMPTY' });
+    q.text = clean;
+    touchSession(session); markDirty();
+    broadcastQuestionsUpdated(session);
+    // als deze vraag actief is, opnieuw als actief broadcasten zodat tekst in question bar mee-update
+    if (q.status === 'active') {
+      io.to(`session:${session.code}`).emit('question-active', {
+        questionId: q.id, questionText: q.text,
+        positions: Array.from(q.positions.entries()).map(([uid, p]) => ({ userId: uid, x: p.x, y: p.y, timestamp: p.timestamp }))
+      });
+    }
+    cb?.({ ok: true });
+  });
+
+  // ----- Admin: vraag verwijderen -----
+  socket.on('admin-delete-question', ({ id } = {}, cb) => {
+    const session = requireAdmin(); if (!session) return cb?.({ ok: false });
+    const qid = Number(id);
+    const q = session.questions.get(qid);
+    if (!q) return cb?.({ ok: false, error: 'NOT_FOUND' });
+    session.questions.delete(qid);
+    if (session.activeQuestionId === qid) {
+      session.activeQuestionId = null;
+      io.to(`session:${session.code}`).emit('question-closed', { questionId: qid });
+    }
+    touchSession(session); markDirty();
+    broadcastQuestionsUpdated(session);
+    cb?.({ ok: true });
+  });
+
+  // ----- Admin: vragen herordenen -----
+  socket.on('admin-reorder-questions', ({ ids } = {}, cb) => {
+    const session = requireAdmin(); if (!session) return cb?.({ ok: false });
+    if (!Array.isArray(ids)) return cb?.({ ok: false, error: 'INVALID' });
+    const newMap = new Map();
+    for (const rawId of ids) {
+      const id = Number(rawId);
+      const q = session.questions.get(id);
+      if (q) newMap.set(id, q);
+    }
+    // vragen die niet in `ids` zaten achteraan plakken (veiligheidsnet)
+    for (const [id, q] of session.questions) if (!newMap.has(id)) newMap.set(id, q);
+    session.questions = newMap;
+    touchSession(session); markDirty();
+    broadcastQuestionsUpdated(session);
+    cb?.({ ok: true });
+  });
+
+  // ----- Admin: volledige replace (preset laden) -----
+  socket.on('admin-replace-all', ({ config, questions: qs } = {}, cb) => {
+    const session = requireAdmin(); if (!session) return cb?.({ ok: false });
+    // nieuwe config
+    session.config = sanitizeConfig(config);
+    // nieuwe vragen
+    if (Array.isArray(qs)) {
+      const newMap = new Map();
+      let idCounter = 1;
+      for (const item of qs) {
+        const text = sanitizeQuestionText(typeof item === 'string' ? item : item?.text);
+        if (!text) continue;
+        const id = idCounter++;
+        newMap.set(id, { id, text, status: 'pending', launchedAt: null, positions: new Map() });
+      }
+      if (newMap.size > 0) {
+        session.questions = newMap;
+        session.activeQuestionId = null;
+        session.nextQuestionId = idCounter;
+      }
+    }
+    touchSession(session); markDirty();
+    broadcastConfigChanged(session);
+    broadcastQuestionsUpdated(session);
+    cb?.({ ok: true, state: buildAdminState(session) });
   });
 
   socket.on('disconnect', () => {

@@ -4,10 +4,36 @@
   const VB = 600;
   const PLOT = { x: 60, y: 30, w: 520, h: 510 };
 
+  const DEFAULT_CONFIG = {
+    axisX: { title: 'Risico',                  low: 'Hoog', high: 'Laag' },
+    axisY: { title: 'Pedagogische meerwaarde', low: 'Laag', high: 'Hoog' },
+    quadrants: {
+      tl: { text: 'Hoog risico / Hoge meerwaarde', color: '#ffe8cc' },
+      tr: { text: 'Laag risico / Hoge meerwaarde', color: '#dcf1dc' },
+      bl: { text: 'Hoog risico / Lage meerwaarde', color: '#fde0e0' },
+      br: { text: 'Laag risico / Lage meerwaarde', color: '#ececec' }
+    }
+  };
+
   function esc(s) {
     return String(s ?? '').replace(/[&<>"']/g, c => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     }[c]));
+  }
+
+  function mergeConfig(cfg) {
+    const d = DEFAULT_CONFIG;
+    if (!cfg) return structuredClone(d);
+    return {
+      axisX: { ...d.axisX, ...(cfg.axisX || {}) },
+      axisY: { ...d.axisY, ...(cfg.axisY || {}) },
+      quadrants: {
+        tl: { ...d.quadrants.tl, ...(cfg.quadrants?.tl || {}) },
+        tr: { ...d.quadrants.tr, ...(cfg.quadrants?.tr || {}) },
+        bl: { ...d.quadrants.bl, ...(cfg.quadrants?.bl || {}) },
+        br: { ...d.quadrants.br, ...(cfg.quadrants?.br || {}) }
+      }
+    };
   }
 
   class QuadrantChart {
@@ -21,8 +47,15 @@
       this.positions = new Map();
       this.lastSubmit = 0;
       this._tooltipEl = null;
+      this.config = mergeConfig(opts.config);
       this._build();
       this._bindInput(); // altijd binden; handlers gaten op this.interactive
+    }
+
+    setConfig(cfg) {
+      this.config = mergeConfig(cfg);
+      this._redrawBase();
+      this.render();
     }
 
     setOwnUserId(uid) { this.ownUserId = uid; this.render(); }
@@ -52,7 +85,14 @@
       this.svg.classList.add('quadrant-chart');
       if (this.interactive) this.svg.classList.add('interactive');
       this.svg.innerHTML = this._baseSVG();
-      // Positions layer
+      this.layer = document.createElementNS(NS, 'g');
+      this.layer.setAttribute('class', 'positions-layer');
+      this.svg.appendChild(this.layer);
+    }
+
+    _redrawBase() {
+      // reset alles en teken opnieuw (base + layer)
+      this.svg.innerHTML = this._baseSVG();
       this.layer = document.createElementNS(NS, 'g');
       this.layer.setAttribute('class', 'positions-layer');
       this.svg.appendChild(this.layer);
@@ -63,11 +103,12 @@
       const cx = x + w / 2, cy = y + h / 2;
       const parts = [];
 
-      // kwadranten — X=risico (hoog LINKS, laag RECHTS), Y=meerwaarde (hoog BOVEN, laag ONDER)
-      parts.push(`<rect x="${x}" y="${y}" width="${w/2}" height="${h/2}" fill="#ffe8cc"/>`);          // LT: hoog risico / hoge meerwaarde — oranje
-      parts.push(`<rect x="${cx}" y="${y}" width="${w/2}" height="${h/2}" fill="#dcf1dc"/>`);         // RT: laag risico / hoge meerwaarde — groen
-      parts.push(`<rect x="${x}" y="${cy}" width="${w/2}" height="${h/2}" fill="#fde0e0"/>`);         // LB: hoog risico / lage meerwaarde — rood
-      parts.push(`<rect x="${cx}" y="${cy}" width="${w/2}" height="${h/2}" fill="#ececec"/>`);        // RB: laag risico / lage meerwaarde — grijs
+      const cfg = this.config;
+      // kwadrant-achtergronden met configureerbare kleuren
+      parts.push(`<rect x="${x}"  y="${y}"  width="${w/2}" height="${h/2}" fill="${cfg.quadrants.tl.color}"/>`);
+      parts.push(`<rect x="${cx}" y="${y}"  width="${w/2}" height="${h/2}" fill="${cfg.quadrants.tr.color}"/>`);
+      parts.push(`<rect x="${x}"  y="${cy}" width="${w/2}" height="${h/2}" fill="${cfg.quadrants.bl.color}"/>`);
+      parts.push(`<rect x="${cx}" y="${cy}" width="${w/2}" height="${h/2}" fill="${cfg.quadrants.br.color}"/>`);
 
       // grid 100×100 — gelaagde opacity: per 1 heel subtiel, per 5 lichter, per 10 middel, per 25 donker
       for (let i = 1; i < 100; i++) {
@@ -89,24 +130,23 @@
       // buitenrand
       parts.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="#222" stroke-width="2"/>`);
 
-      // kwadrant-labels (subtiel, in hoeken)
-      const q = (tx, ty, text, anchor, color) => `
-        <text x="${tx}" y="${ty}" text-anchor="${anchor}" font-size="13" font-weight="700" fill="${color}" opacity="0.72">${esc(text)}</text>`;
-      parts.push(q(x + 10,       y + 22,         'Hoog risico / Hoge meerwaarde',  'start', '#8a5a1d'));
-      parts.push(q(x + w - 10,   y + 22,         'Laag risico / Hoge meerwaarde',  'end',   '#2d6a2d'));
-      parts.push(q(x + 10,       y + h - 10,     'Hoog risico / Lage meerwaarde',  'start', '#8a2b2b'));
-      parts.push(q(x + w - 10,   y + h - 10,     'Laag risico / Lage meerwaarde',  'end',   '#555'));
+      // kwadrant-tekstlabels (subtiel, in hoeken)
+      const qText = (tx, ty, text, anchor) => `
+        <text x="${tx}" y="${ty}" text-anchor="${anchor}" font-size="13" font-weight="700" fill="#333" opacity="0.72">${esc(text)}</text>`;
+      parts.push(qText(x + 10,     y + 22,     cfg.quadrants.tl.text, 'start'));
+      parts.push(qText(x + w - 10, y + 22,     cfg.quadrants.tr.text, 'end'));
+      parts.push(qText(x + 10,     y + h - 10, cfg.quadrants.bl.text, 'start'));
+      parts.push(qText(x + w - 10, y + h - 10, cfg.quadrants.br.text, 'end'));
 
-      // as-labels buiten plot
-      // X-as = Risico (Hoog links, Laag rechts)
-      parts.push(`<text x="${cx}" y="${VB - 14}" text-anchor="middle" font-size="17" font-weight="700" fill="#111">Risico</text>`);
-      parts.push(`<text x="${x}" y="${y + h + 22}" text-anchor="middle" font-size="13" fill="#333">Hoog</text>`);
-      parts.push(`<text x="${x + w}" y="${y + h + 22}" text-anchor="middle" font-size="13" fill="#333">Laag</text>`);
+      // X-as: title + low (links) + high (rechts)
+      parts.push(`<text x="${cx}" y="${VB - 14}" text-anchor="middle" font-size="17" font-weight="700" fill="#111">${esc(cfg.axisX.title)}</text>`);
+      parts.push(`<text x="${x}"     y="${y + h + 22}" text-anchor="middle" font-size="13" fill="#333">${esc(cfg.axisX.low)}</text>`);
+      parts.push(`<text x="${x + w}" y="${y + h + 22}" text-anchor="middle" font-size="13" fill="#333">${esc(cfg.axisX.high)}</text>`);
 
-      // Y-as = Pedagogische meerwaarde (Hoog boven, Laag onder)
-      parts.push(`<text transform="translate(18, ${cy}) rotate(-90)" text-anchor="middle" font-size="17" font-weight="700" fill="#111">Pedagogische meerwaarde</text>`);
-      parts.push(`<text x="${x - 6}" y="${y + 6}" text-anchor="end" font-size="13" fill="#333">Hoog</text>`);
-      parts.push(`<text x="${x - 6}" y="${y + h}" text-anchor="end" font-size="13" fill="#333">Laag</text>`);
+      // Y-as: title + low (onder) + high (boven)
+      parts.push(`<text transform="translate(18, ${cy}) rotate(-90)" text-anchor="middle" font-size="17" font-weight="700" fill="#111">${esc(cfg.axisY.title)}</text>`);
+      parts.push(`<text x="${x - 6}" y="${y + 6}"     text-anchor="end" font-size="13" fill="#333">${esc(cfg.axisY.high)}</text>`);
+      parts.push(`<text x="${x - 6}" y="${y + h}"     text-anchor="end" font-size="13" fill="#333">${esc(cfg.axisY.low)}</text>`);
 
       return parts.join('');
     }
@@ -200,7 +240,7 @@
         // tooltip (SVG title = desktop hover). Mobiel: via pointerdown handler hierna.
         const title = document.createElementNS(NS, 'title');
         const labelText = this.blindMode && !isOwn ? 'Anoniem' : (p.name || '');
-        title.textContent = `${labelText} — Risico ${Math.round(100 - p.x)}, Meerwaarde ${Math.round(p.y)}`;
+        title.textContent = `${labelText} — ${this.config.axisX.title}: ${Math.round(p.x)}, ${this.config.axisY.title}: ${Math.round(p.y)}`;
         g.appendChild(title);
 
         // label
@@ -240,7 +280,7 @@
       this._ensureTooltip();
       const rect = this.svg.getBoundingClientRect();
       const name = this.blindMode && p.userId !== this.ownUserId ? 'Anoniem' : (p.name || '');
-      this._tooltipEl.textContent = `${name} • Risico ${Math.round(100 - p.x)} • Meerwaarde ${Math.round(p.y)}`;
+      this._tooltipEl.textContent = `${name} • ${this.config.axisX.title}: ${Math.round(p.x)} • ${this.config.axisY.title}: ${Math.round(p.y)}`;
       this._tooltipEl.style.left = `${evt.clientX - rect.left + 12}px`;
       this._tooltipEl.style.top = `${evt.clientY - rect.top + 12}px`;
       this._tooltipEl.classList.add('show');
