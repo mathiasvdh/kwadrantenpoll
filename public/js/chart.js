@@ -1,8 +1,8 @@
 // QuadrantChart — gedeeld tussen deelnemer en admin
 (function (global) {
   const NS = 'http://www.w3.org/2000/svg';
-  const VB = 600;
-  const PLOT = { x: 60, y: 30, w: 520, h: 510 };
+  const VB = 620;
+  const PLOT = { x: 60, y: 60, w: 500, h: 500 };
 
   const DEFAULT_CONFIG = {
     axisX: { title: 'Risico',                  low: 'Hoog', high: 'Laag' },
@@ -123,14 +123,22 @@
         parts.push(`<line x1="${x}" y1="${gy}" x2="${x+w}" y2="${gy}" stroke="${col}" stroke-width="${sw}"/>`);
       }
 
-      // middenlijnen
-      parts.push(`<line x1="${cx}" y1="${y}" x2="${cx}" y2="${y+h}" stroke="#666" stroke-width="2" stroke-dasharray="4 4"/>`);
-      parts.push(`<line x1="${x}" y1="${cy}" x2="${x+w}" y2="${cy}" stroke="#666" stroke-width="2" stroke-dasharray="4 4"/>`);
+      // Pijl-marker voor de kruis-assen (werkt aan beide uiteinden via auto-start-reverse)
+      parts.push(`<defs>
+        <marker id="axArrow" viewBox="0 -6 12 12" refX="10" refY="0"
+                markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14"
+                orient="auto-start-reverse">
+          <path d="M0,-6 L12,0 L0,6 z" fill="#222"/>
+        </marker>
+      </defs>`);
 
-      // buitenrand
-      parts.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="#222" stroke-width="2"/>`);
+      // KRUIS-ASSEN (lopen iets voorbij het kwadrantenvlak, met pijlen op beide uiteinden)
+      const EXT = 14;
+      const axStroke = '#222', axSW = 2;
+      parts.push(`<line x1="${x - EXT}" y1="${cy}" x2="${x + w + EXT}" y2="${cy}" stroke="${axStroke}" stroke-width="${axSW}" marker-start="url(#axArrow)" marker-end="url(#axArrow)"/>`);
+      parts.push(`<line x1="${cx}" y1="${y - EXT}" x2="${cx}" y2="${y + h + EXT}" stroke="${axStroke}" stroke-width="${axSW}" marker-start="url(#axArrow)" marker-end="url(#axArrow)"/>`);
 
-      // kwadrant-tekstlabels (subtiel, in hoeken)
+      // Kwadrant-tekstlabels (subtiel, in de 4 hoeken van het gekleurde vlak)
       const qText = (tx, ty, text, anchor) => `
         <text x="${tx}" y="${ty}" text-anchor="${anchor}" font-size="13" font-weight="700" fill="#333" opacity="0.72">${esc(text)}</text>`;
       parts.push(qText(x + 10,     y + 22,     cfg.quadrants.tl.text, 'start'));
@@ -138,15 +146,21 @@
       parts.push(qText(x + 10,     y + h - 10, cfg.quadrants.bl.text, 'start'));
       parts.push(qText(x + w - 10, y + h - 10, cfg.quadrants.br.text, 'end'));
 
-      // X-as: title + low (links) + high (rechts)
-      parts.push(`<text x="${cx}" y="${VB - 14}" text-anchor="middle" font-size="17" font-weight="700" fill="#111">${esc(cfg.axisX.title)}</text>`);
-      parts.push(`<text x="${x}"     y="${y + h + 22}" text-anchor="middle" font-size="13" fill="#333">${esc(cfg.axisX.low)}</text>`);
-      parts.push(`<text x="${x + w}" y="${y + h + 22}" text-anchor="middle" font-size="13" fill="#333">${esc(cfg.axisX.high)}</text>`);
+      // Eind-labels bij elke pijlpunt (Hoog/Laag + configureerbare termen)
+      const endLabel = (tx, ty, text, anchor) =>
+        `<text x="${tx}" y="${ty}" text-anchor="${anchor}" font-size="13" font-weight="600" fill="#333" stroke="white" stroke-width="3" paint-order="stroke">${esc(text)}</text>`;
+      // X-as eindlabels (links = low, rechts = high)
+      parts.push(endLabel(x - EXT - 6,       cy + 5,                  cfg.axisX.low,  'end'));
+      parts.push(endLabel(x + w + EXT + 6,   cy + 5,                  cfg.axisX.high, 'start'));
+      // Y-as eindlabels (boven = high, onder = low)
+      parts.push(endLabel(cx,                y - EXT - 6,             cfg.axisY.high, 'middle'));
+      parts.push(endLabel(cx,                y + h + EXT + 16,        cfg.axisY.low,  'middle'));
 
-      // Y-as: title + low (onder) + high (boven)
-      parts.push(`<text transform="translate(18, ${cy}) rotate(-90)" text-anchor="middle" font-size="17" font-weight="700" fill="#111">${esc(cfg.axisY.title)}</text>`);
-      parts.push(`<text x="${x - 6}" y="${y + 6}"     text-anchor="end" font-size="13" fill="#333">${esc(cfg.axisY.high)}</text>`);
-      parts.push(`<text x="${x - 6}" y="${y + h}"     text-anchor="end" font-size="13" fill="#333">${esc(cfg.axisY.low)}</text>`);
+      // Astitels OP de as zelf — verschoven van kruispunt naar rechter-/bovenhelft
+      // X-as titel: boven de horizontale as in de rechterhelft
+      parts.push(`<text x="${cx + w * 0.22}" y="${cy - 10}" text-anchor="middle" font-size="18" font-weight="700" fill="#111" stroke="white" stroke-width="6" paint-order="stroke">${esc(cfg.axisX.title)}</text>`);
+      // Y-as titel: gedraaid langs de verticale as in de bovenhelft
+      parts.push(`<text transform="translate(${cx - 10}, ${cy - h * 0.22}) rotate(-90)" text-anchor="middle" font-size="18" font-weight="700" fill="#111" stroke="white" stroke-width="6" paint-order="stroke">${esc(cfg.axisY.title)}</text>`);
 
       return parts.join('');
     }
