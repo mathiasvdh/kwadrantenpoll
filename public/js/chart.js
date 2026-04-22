@@ -47,9 +47,110 @@
       this.positions = new Map();
       this.lastSubmit = 0;
       this._tooltipEl = null;
+      this.zoom = 1;
+      this._fsMode = false;
       this.config = mergeConfig(opts.config);
       this._build();
+      this._createControls();
       this._bindInput(); // altijd binden; handlers gaten op this.interactive
+      this._bindKeyboardAndWheel();
+    }
+
+    // --- zoom & fullscreen ---
+    setZoom(z) {
+      this.zoom = Math.max(0.4, Math.min(5, Number(z) || 1));
+      const wrapper = this.svg.parentElement;
+      if (!wrapper) return;
+      if (Math.abs(this.zoom - 1) < 0.01) {
+        this.zoom = 1;
+        wrapper.style.width = '';
+        wrapper.style.maxWidth = '';
+        wrapper.style.maxHeight = '';
+      } else {
+        const parentEl = wrapper.parentElement;
+        const parentAvail = parentEl ? parentEl.clientWidth - 20 : 500;
+        const base = Math.min(720, Math.max(240, parentAvail));
+        const size = Math.round(base * this.zoom);
+        wrapper.style.width = `${size}px`;
+        wrapper.style.maxWidth = 'none';
+        wrapper.style.maxHeight = 'none';
+      }
+      // update zoom-badge tekst
+      if (this._zoomBadge) this._zoomBadge.textContent = `${Math.round(this.zoom * 100)}%`;
+    }
+
+    toggleFullscreen(force) {
+      const wrapper = this.svg.parentElement;
+      if (!wrapper) return;
+      const want = typeof force === 'boolean' ? force : !this._fsMode;
+      this._fsMode = want;
+      wrapper.classList.toggle('fs-mode', want);
+      // in fs-mode: reset zoom zodat SVG de volledige wrapper vult
+      if (want) {
+        this._zoomBefore = this.zoom;
+        this.setZoom(1);
+      } else if (this._zoomBefore != null) {
+        this.setZoom(this._zoomBefore);
+        this._zoomBefore = null;
+      }
+      if (this._fsBtn) this._fsBtn.textContent = want ? '✕' : '⛶';
+      if (this._fsBtn) this._fsBtn.title = want ? 'Sluit volledig scherm (Esc)' : 'Volledig scherm (F)';
+    }
+
+    _createControls() {
+      const wrapper = this.svg.parentElement;
+      if (!wrapper || wrapper.querySelector('.chart-zoom')) return;
+      if (getComputedStyle(wrapper).position === 'static') wrapper.style.position = 'relative';
+      const div = document.createElement('div');
+      div.className = 'chart-zoom';
+      div.innerHTML = `
+        <button type="button" data-act="in" title="Inzoomen (+)">+</button>
+        <button type="button" data-act="out" title="Uitzoomen (−)">−</button>
+        <button type="button" data-act="reset" title="100% (0)"><span class="z-reset">100%</span></button>
+        <button type="button" data-act="fs" title="Volledig scherm (F)">⛶</button>
+      `;
+      // geen positie-plaatsing via deze knoppen
+      div.addEventListener('pointerdown', e => e.stopPropagation());
+      div.addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        e.stopPropagation();
+        switch (btn.dataset.act) {
+          case 'in':    this.setZoom(this.zoom * 1.25); break;
+          case 'out':   this.setZoom(this.zoom / 1.25); break;
+          case 'reset': this.setZoom(1); break;
+          case 'fs':    this.toggleFullscreen(); break;
+        }
+      });
+      wrapper.appendChild(div);
+      this._zoomBadge = div.querySelector('.z-reset');
+      this._fsBtn = div.querySelector('[data-act="fs"]');
+    }
+
+    _bindKeyboardAndWheel() {
+      if (QuadrantChart._kbBoundChart === this) return;
+      // Slechts 1 instantie bindt globale keyboard shortcuts — als er al een is, skippen we
+      if (!QuadrantChart._kbBoundChart) {
+        QuadrantChart._kbBoundChart = this;
+        document.addEventListener('keydown', (e) => {
+          const a = document.activeElement;
+          if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable)) return;
+          const chart = QuadrantChart._kbBoundChart;
+          if (!chart) return;
+          if (e.key === '+' || (e.key === '=' && e.shiftKey)) { e.preventDefault(); chart.setZoom(chart.zoom * 1.25); }
+          else if (e.key === '-' || e.key === '_') { e.preventDefault(); chart.setZoom(chart.zoom / 1.25); }
+          else if (e.key === '0') { e.preventDefault(); chart.setZoom(1); }
+          else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); chart.toggleFullscreen(); }
+          else if (e.key === 'Escape' && chart._fsMode) { chart.toggleFullscreen(false); }
+        });
+      }
+      // Ctrl+wheel zoom over de eigen svg
+      this.svg.addEventListener('wheel', (e) => {
+        if (!e.ctrlKey) return;
+        e.preventDefault();
+        const factor = e.deltaY < 0 ? 1.1 : 1/1.1;
+        this.setZoom(this.zoom * factor);
+      }, { passive: false });
     }
 
     setConfig(cfg) {
