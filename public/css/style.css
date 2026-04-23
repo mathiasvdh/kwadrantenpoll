@@ -331,6 +331,11 @@ input[type="text"]:focus { border-color: var(--accent); }
 .chart-zoom button:hover { background: white; border-color: var(--accent); }
 .chart-zoom .z-reset { font-size: 11px; letter-spacing: 0.5px; }
 
+/* Tijdens het slepen: geen transition op eigen stip = directe respons */
+.quadrant-chart.dragging .dot-group.own .dot,
+.quadrant-chart.dragging .dot-group.own .pulse,
+.quadrant-chart.dragging .dot-group.own { transition: none !important; }
+
 /* Fullscreen-mode (eigen implementatie, niet browser API) */
 .chart-wrapper.fs-mode {
   position: fixed;
@@ -592,6 +597,8 @@ input[type="text"]:focus { border-color: var(--accent); }
   .chart-wrapper { padding: 4px; }
   .chart-zoom { top: 6px; right: 6px; gap: 2px; }
   .chart-zoom button { min-width: 34px; height: 30px; font-size: 14px; padding: 0 4px; }
+  /* Fullscreen werkt niet goed op smartphones → verbergen */
+  .chart-zoom [data-act="fs"] { display: none; }
 }
 
 .sidebar-backdrop {

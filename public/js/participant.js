@@ -287,6 +287,8 @@
     state.chart = new QuadrantChart(el.chartSvg, {
       interactive: false,
       ownUserId: state.userId,
+      ownName: state.name,
+      ownColor: state.color,
       config: state.config || null,
       onSubmit: (x, y, final) => {
         if (state.viewedQuestionId !== state.activeQuestionId) return;

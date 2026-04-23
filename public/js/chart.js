@@ -42,6 +42,8 @@
       this.onSubmit = opts.onSubmit || null;
       this.interactive = !!opts.interactive;
       this.ownUserId = opts.ownUserId || null;
+      this.ownName = opts.ownName || null;
+      this.ownColor = opts.ownColor || null;
       this.blindMode = false;
       this.hoverLabelsOnly = false;
       this.positions = new Map();
@@ -427,21 +429,47 @@
       return { vx: sx * VB, vy: sy * VB };
     }
 
+    setOwnInfo(name, color) {
+      this.ownName = name || this.ownName;
+      this.ownColor = color || this.ownColor;
+    }
+
     _bindInput() {
       let dragging = false;
+      const clamp = (v, lo, hi) => v < lo ? lo : (v > hi ? hi : v);
+      const computeXY = (clientX, clientY) => {
+        const { vx, vy } = this._clientToSvg(clientX, clientY);
+        // Klem buiten-de-plot terug naar de rand → vloeiend langs hoeken/randen
+        const cvx = clamp(vx, PLOT.x, PLOT.x + PLOT.w);
+        const cvy = clamp(vy, PLOT.y, PLOT.y + PLOT.h);
+        return this.toValue(cvx, cvy);
+      };
       const submit = (clientX, clientY, final) => {
         if (!this.interactive) return;
-        const { vx, vy } = this._clientToSvg(clientX, clientY);
-        if (vx < PLOT.x || vx > PLOT.x + PLOT.w || vy < PLOT.y || vy > PLOT.y + PLOT.h) return;
-        const { x, y } = this.toValue(vx, vy);
+        const { x, y } = computeXY(clientX, clientY);
+        // 1) LOKAAL: eigen stip onmiddellijk op nieuwe positie (geen server-wachttijd)
+        if (this.ownUserId) {
+          const existing = this.positions.get(this.ownUserId);
+          this.upsertPosition({
+            userId: this.ownUserId,
+            name:   existing?.name  ?? this.ownName  ?? '',
+            color:  existing?.color ?? this.ownColor ?? '#888',
+            x, y
+          });
+        }
+        // 2) SERVER EMIT: throttled, final altijd door
         const now = Date.now();
-        if (!final && now - this.lastSubmit < 80) return;
+        if (!final && now - this.lastSubmit < 55) return;
         this.lastSubmit = now;
         this.onSubmit?.(x, y, final);
       };
       this.svg.addEventListener('pointerdown', (e) => {
         if (!this.interactive) return;
+        // Starten mag alleen binnen het plotvlak; daarna tolereert dragging randen
+        const { vx, vy } = this._clientToSvg(e.clientX, e.clientY);
+        if (vx < PLOT.x || vx > PLOT.x + PLOT.w || vy < PLOT.y || vy > PLOT.y + PLOT.h) return;
         dragging = true;
+        this.svg.classList.add('dragging');
         try { this.svg.setPointerCapture(e.pointerId); } catch {}
         submit(e.clientX, e.clientY, false);
       });
@@ -452,10 +480,12 @@
       const endDrag = (e) => {
         if (!dragging) return;
         dragging = false;
+        this.svg.classList.remove('dragging');
         submit(e.clientX, e.clientY, true);
       };
       this.svg.addEventListener('pointerup', endDrag);
       this.svg.addEventListener('pointercancel', endDrag);
+      this.svg.addEventListener('lostpointercapture', endDrag);
     }
 
     exportPNG(filename = 'kwadranten.png') {
