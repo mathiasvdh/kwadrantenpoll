@@ -323,6 +323,16 @@ function broadcastConfigChanged(session) {
 // ============================================================================
 const app = express();
 app.use(express.json());
+
+// Embed-vriendelijke headers zodat de app in o.a. PowerPoint Web Viewer,
+// Microsoft Teams, Notion, etc. als iframe mag geladen worden.
+app.use((req, res, next) => {
+  res.removeHeader('X-Frame-Options');
+  // CSP: sta embed toe vanuit elke oorsprong (wijzig naar specifieke domains als je strenger wil zijn)
+  res.setHeader('Content-Security-Policy', "frame-ancestors *");
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/admin', (req, res) => {
