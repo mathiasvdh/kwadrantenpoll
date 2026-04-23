@@ -16,20 +16,16 @@ const MAX_PARTICIPANTS = 200;
 // STANDAARD VRAGEN — komen in een nieuwe sessie. Admin kan ze live aanpassen.
 // ============================================================================
 const DEFAULT_QUESTIONS = [
-  "Een chatbot op basis van geselecteerde bronnen die vragen van studenten tijdens de les behandelt, zodat enkel de moeilijkste vragen nog aan de docent gesteld worden.",
-  "Een Socratische bot die aan het begin van de les vragen stelt aan studenten over de vorige les.",
-  "Een bot die zich gedraagt als een student en die studenten begrippen uit de cursus moeten aanleren.",
-  "Een chatbot die oefenexamenvragen aanbiedt met inhoudelijke feedback op basis van het cursusmateriaal.",
-  "Een chatbot gevuld met het cursusmateriaal plus alle academische artikels uit de syllabus, waarin studenten vrij elk concept kunnen bevragen tijdens en na de les.",
-  "Een rollenspel-bot die de rol speelt van een patiënt, cliënt of getuige waarmee studenten gesprekstechnieken oefenen.",
-  "Een debat-tegenstander die een specifieke filosofische of ethische positie inneemt, waartegen studenten moeten argumenteren.",
-  "Een chatbot voor eigen gebruik door de docent, doorzoekbaar in diens vakliteratuur en collegenotities om passages en citaten op te sporen bij het opstellen van examenvragen.",
-  "Een bot die een eerste feedbackronde genereert op thesisdrafts, die studenten zelf inzetten vóór indiening bij de promotor.",
-  "Een AI-helpdesk die studenten antwoord geeft op vragen over stagereglement, ECTS-afspraken en examenregeling.",
-  "Een rubric-nakijker die open examenvragen automatisch scoort volgens een vastgelegde rubric, waarmee de docent zijn eigen score vergelijkt.",
-  "Een via NotebookLM gegenereerde podcast op basis van cursusmateriaal en slides, als preteaching beschikbaar voor studenten.",
-  "Een bot die per hoofdstuk van de cursus samenvattingen en studiekaarten genereert en aan alle studenten ter beschikking stelt.",
-  "Een vertaalbot die alle colleges live ondertitelt voor anderstalige en slechthorende studenten en de transcriptie nadien beschikbaar maakt."
+  "AI die feedback geeft op de eerste draft van een schrijfopdracht.",
+  "Een AI-tutor die studenten buiten de lesuren persoonlijk begeleidt bij oefeningen en uitleg, afgestemd op hun tempo en niveau.",
+  "Een AI-detector waarmee de docent nagaat of een ingeleverde tekst door AI is gegenereerd.",
+  "AI die live hoorcolleges vertaalt voor anderstalige studenten en de transcriptie ter beschikking stelt.",
+  "AI die data van studenten analyseert en monitort: aanwezigheid, participatie, score, feedback, uitvalrisico, voortgang.",
+  "Een op maat gemaakte chatbot die op basis van bronnenmateriaal van de docent alle vragen beantwoordt tijdens de les, zodat er meer tijd is voor lesgeven.",
+  "Een AI waarin je tientallen academische artikelen kan uploaden en die gebruikt kan worden als kennisbasis.",
+  "AI die lesmateriaal genereert voor de docent (slides, hand-outs, extra oefeningen, …).",
+  "Een bot die zich gedraagt als een student, waaraan studenten begrippen uit de cursus moeten uitleggen.",
+  "De online applicatie die we nu gebruiken: een docent die via vibe-code een tool bouwt waarin collega's stemmen over AI in onderwijs."
 ];
 
 // ============================================================================
